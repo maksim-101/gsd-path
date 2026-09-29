@@ -1665,6 +1665,24 @@ class IsolationTests(unittest.TestCase):
                 )
             self.assertEqual(git(repo, "rev-parse", "HEAD"), base)
 
+    def test_checkpoint_accepts_project_scope_settings(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repo = Path(temporary) / "repo"
+            repo.mkdir()
+            base = self.init_bound_repo(repo)
+            self.write(repo, ".project/STATE.md", "roadmap done\n")
+            self.write(repo, ".project/config.json", "{}\n")
+            self.write(repo, ".project/model-policy.json", "{}\n")
+
+            result = isolation.checkpoint(
+                repo, base, "roadmap: program roadmap approved", "Why: approved roadmap checkpoint", [".project"],
+            )
+
+            self.assertEqual(
+                result["paths"],
+                [".project/STATE.md", ".project/config.json", ".project/model-policy.json"],
+            )
+
     def test_checkpoint_retry_returns_the_exact_existing_commit(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             repo = Path(temporary) / "repo"
